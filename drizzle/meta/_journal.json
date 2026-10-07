@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1790734975110,
+      "tag": "0000_busy_barracuda",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790737581031,
+      "tag": "0001_slippery_young_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790737927587,
+      "tag": "0002_third_nico_minoru",
+      "breakpoints": true
+    }
+  ]
+}

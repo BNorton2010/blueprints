@@ -1,0 +1,1 @@
+ALTER TABLE `blueprints` ADD `transcript` text DEFAULT '' NOT NULL;

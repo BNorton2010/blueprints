@@ -1,0 +1,84 @@
+/* Shared sidebar conversation surface. Blueprint and Strategy use the same shell. */
+.contextual-drawer{position:fixed;inset:0 0 0 auto;margin:0;width:min(660px,92vw);max-width:none;height:100dvh;max-height:none;padding:0;border:0;border-left:1px solid var(--line-strong);background:var(--panel);color:var(--text);box-shadow:var(--shadow);overflow:auto}
+.contextual-drawer::backdrop{background:rgba(3,7,18,.45)}
+.contextual-drawer[open]{display:flex;flex-direction:column}
+.contextual-drawer>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px;border-bottom:1px solid var(--line);flex-shrink:0}
+.contextual-drawer h2{font-size:23px;margin:5px 0;line-height:1.35}.contextual-drawer>header>button{white-space:nowrap}
+.contextual-drawer-body{display:flex;flex-direction:column;padding:12px 16px;flex:1;overflow:auto;min-height:0;gap:12px}
+.contextual-drawer>footer{padding:10px 16px;border-top:1px solid var(--line);background:var(--panel);flex-shrink:0}
+.contextual-drawer>footer[hidden]{display:none}.contextual-drawer>.offer-error{margin:12px 22px}
+.contextual-drawer .drawer-chat.builder-chat{flex:1;min-height:300px;height:auto;margin:0}
+.contextual-drawer .drawer-chat .chat-feed{flex:1;min-height:160px;padding:18px;overflow-y:auto}
+.contextual-drawer .chat-heading{padding:12px 16px}.contextual-drawer .offer-message{margin-bottom:20px}.contextual-drawer .offer-message:last-child{margin-bottom:0}
+.contextual-drawer .offer-message p{white-space:pre-wrap;overflow-wrap:anywhere}
+.contextual-drawer .chat-latest{bottom:84px}
+.contextual-drawer .drawer-composer{display:block;margin:0;padding:8px 12px}.contextual-drawer .drawer-composer label,.contextual-drawer .voice-composer{margin:0}
+.chat-composer textarea.drawer-message{display:block;width:100%;font:inherit;font-size:16px;color:var(--text);min-height:52px;max-height:120px;margin:0!important;padding:13px 94px 13px 12px!important;border:0!important;border-radius:14px!important;box-shadow:none!important;background:transparent;resize:none;line-height:1.5}
+.chat-composer .voice-composer:has(#voiceDialog:not([hidden]))>.drawer-message{padding:10px 12px!important}
+.contextual-drawer .drawer-composer .inline-voice-host>button.chat-mic-icon{min-height:40px}
+.contextual-drawer .drawer-progress{margin:0 0 6px;font-size:14px;color:var(--muted)}
+.contextual-drawer .drawer-next-actions>summary{cursor:pointer;font-size:14px;font-weight:600}.contextual-drawer .drawer-next-actions[open] .drawer-tools{margin-top:10px}
+.drawer-tools{display:flex;flex-wrap:wrap;gap:8px}.drawer-tools button{font-size:14px;padding:8px 10px;min-height:40px}
+.contextual-drawer .drawer-hint{font-size:13px;line-height:1.5;margin:5px 0 0;color:var(--muted)}
+.contextual-drawer li{font-size:16px;line-height:1.6;overflow-wrap:anywhere}.contextual-drawer button:focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+.contextual-drawer button:disabled{cursor:not-allowed}.contextual-drawer[aria-busy=true] button:disabled{cursor:wait}
+@media(max-width:700px){.contextual-drawer{width:100vw;border:0}.contextual-drawer>header{padding:14px 16px}.contextual-drawer h2{font-size:20px}.contextual-drawer .drawer-composer{padding:8px 10px}.chat-composer textarea.drawer-message{padding-right:100px!important}.drawer-tools button{min-height:44px;flex:1 1 auto}.contextual-drawer .drawer-composer .inline-voice-host>button.chat-mic-icon{min-height:44px}}
+
+.contextual-drawer label{display:grid;gap:8px;margin:16px 0;font-size:14px;font-weight:500}.contextual-drawer select{width:100%;padding:12px;border:1px solid var(--line-strong);border-radius:9px;color:var(--text);background:var(--input);font:inherit;font-size:16px;box-sizing:border-box}
+
+/* Shared keyboard layout for Pages, Offers, Campaigns, intake and drawer chats. */
+.chat-keyboard-surface.builder-chat,.chat-keyboard-surface.contextual-drawer{position:fixed!important;inset:var(--chat-visible-top) 8px auto!important;width:auto!important;height:var(--chat-visible-height)!important;min-height:0!important;max-height:var(--chat-visible-height)!important;margin:0!important;z-index:1000;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow)}
+.chat-keyboard-surface .builder-chat,.chat-keyboard-surface .chat-feed,.chat-keyboard-surface .contextual-drawer-body{min-height:0!important}
+.chat-keyboard-surface .chat-feed{flex:1;overflow:auto;overscroll-behavior:contain}
+.chat-keyboard-surface .chat-heading,.chat-keyboard-surface>header{padding:8px 12px}
+.chat-keyboard-surface .chat-composer{flex-shrink:0;padding:6px 8px}
+.chat-keyboard-surface.contextual-drawer>footer{max-height:60%;overflow:auto;padding:6px 8px}
+.chat-keyboard-surface textarea{font-size:16px!important;scroll-margin-block:12px}
+
+/* Shared assistant typing bubble, in the conversation rather than the composer. */
+.chat-typing{display:flex;width:fit-content;align-items:center;min-height:40px;padding:0 16px;margin:16px 0;border:1px solid var(--line-strong);border-radius:16px 16px 16px 5px;background:var(--panel);color:var(--purple);flex-shrink:0}
+.chat-typing-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.chat-typing-dots{display:flex;gap:5px;align-items:center}
+.chat-typing-dots i{display:block;width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45;animation:chat-typing-pulse 1.2s ease-in-out infinite}
+.chat-typing-dots i:nth-child(2){animation-delay:.15s}.chat-typing-dots i:nth-child(3){animation-delay:.3s}
+@keyframes chat-typing-pulse{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-3px);opacity:1}}
+@media(prefers-reduced-motion:reduce){.chat-typing-dots i{animation:none;opacity:.7}}
+
+/* Shared, readable AI formatting across every conversation. */
+.offer-message .chat-markdown{font-size:inherit;line-height:1.65;overflow-wrap:anywhere;white-space:normal}
+.offer-message .chat-markdown p{white-space:normal;margin:0 0 .85em}
+.offer-message .chat-markdown>:last-child{margin-bottom:0}
+.offer-message .chat-markdown h3{font-size:1.05em;margin:1em 0 .5em;line-height:1.4}
+.offer-message .chat-markdown ul,.offer-message .chat-markdown ol{padding-left:1.5em;margin:.5em 0 1em}
+.offer-message .chat-markdown li{margin:.35em 0;padding-left:.15em}
+.offer-message .chat-markdown blockquote{border-left:3px solid var(--purple);margin:1em 0;padding-left:1em;color:var(--muted)}
+.offer-message .chat-markdown code{font-family:ui-monospace,monospace;font-size:.9em;background:var(--accent-tint);padding:.12em .3em;border-radius:4px}
+.offer-message .chat-markdown pre{max-width:100%;overflow:auto;white-space:pre;padding:14px;background:var(--accent-tint);border-radius:8px}
+.offer-message .chat-markdown pre code{padding:0;background:none}
+.offer-message .chat-markdown a{color:var(--purple);text-decoration:underline}
+#campaignWorkspace>.offer-topline{align-items:center;gap:12px;flex-wrap:wrap}
+#campaignWorkspace>.offer-topline #promoSaveState{margin:0;line-height:1.45;flex:1 1 220px}
+#campaignWorkspace>.offer-topline>button{margin:0;min-height:44px;padding:10px 16px;line-height:1.4;display:inline-flex;align-items:center;justify-content:center;align-self:center}
+#campaignWorkspace>.offer-topline>button[hidden]{display:none}
+@media(max-width:800px){#campaignWorkspace>.offer-topline #promoSaveState{flex-basis:100%;order:2}#campaignWorkspace>.offer-topline #promoDelete,#campaignWorkspace>.offer-topline #promoReviewOpen{order:3;flex:1 1 auto}}
+
+/* Recording sits in the composer's bottom toolbar, alongside Send. */
+.chat-composer .voice-composer:has(#voiceDialog:not([hidden])){display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:0}
+.chat-composer .voice-composer:has(#voiceDialog:not([hidden]))>textarea{grid-column:1/-1;grid-row:1}
+.chat-composer .voice-composer:has(#voiceDialog:not([hidden]))>.inline-voice-host{position:static;grid-column:1;grid-row:2;align-self:end;min-width:0;margin:0;padding:4px 8px 8px}
+.chat-composer .voice-composer:has(#voiceDialog:not([hidden])) .chat-composer-actions{display:flex;grid-column:2;grid-row:2;align-items:center;align-self:end;justify-content:flex-end;margin:0;padding:4px 6px 8px;gap:4px}
+.chat-composer .voice-composer:has(#voiceDialog:not([hidden])) .chat-icon-action{position:static;flex-shrink:0}
+.voice-composer #voiceDialog #voiceRecorderPanel{padding:0;margin:0;gap:6px 10px;align-items:center}
+.voice-composer #voiceDialog .voice-record-status{font-size:13px;line-height:1.4;gap:6px;margin:0;flex:0 1 auto}
+.voice-composer #voiceDialog .voice-record-status output{font-size:13px;margin:0;font-variant-numeric:tabular-nums}
+.voice-composer #voiceDialog #voiceRecorderPanel>.brain-actions{margin:0;gap:6px;align-items:center}
+.voice-composer #voiceDialog #voicePause,.voice-composer #voiceDialog #voiceFinish{min-height:32px;height:32px;width:auto;padding:5px 10px;font-size:13px;line-height:1.3;border-radius:8px;box-shadow:none}
+@media(pointer:coarse){.voice-composer #voiceDialog #voicePause,.voice-composer #voiceDialog #voiceFinish{min-height:40px;height:40px}}
+
+/* Transcript follow-up actions stay in the same compact transport row. */
+.voice-composer #voiceDialog #voiceStart,.voice-composer #voiceDialog #voiceFresh,.voice-composer #voiceDialog #voiceRetry{min-height:32px;height:auto;margin:0;padding:5px 8px;font-size:13px;line-height:1.3;width:auto;flex:0 0 auto}
+.voice-composer #voiceDialog #voiceStart{display:inline-flex;align-items:center;gap:5px}
+.voice-composer #voiceDialog #voiceStart[hidden],.voice-composer #voiceDialog #voiceStart:disabled{display:none}
+.voice-composer #voiceDialog #voiceStart svg{width:16px;height:16px;filter:none}
+.voice-composer #voiceDialog #voiceFresh{border:0;background:transparent;box-shadow:none}
+@media(pointer:coarse){.voice-composer #voiceDialog #voiceStart,.voice-composer #voiceDialog #voiceFresh,.voice-composer #voiceDialog #voiceRetry{min-height:40px}}
