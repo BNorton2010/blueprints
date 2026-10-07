@@ -2,3 +2,10 @@ node_modules/
 dist/
 .sites-runtime/
 .env*
+.dev.vars*
+!.dev.vars.example
+.wrangler/
+.local/
+wrangler.dev.json
+imports/
+*.log

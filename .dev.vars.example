@@ -1,0 +1,18 @@
+# Copy to .dev.vars for local development only. This file contains no secret values.
+# Public values from your NEW Clerk development application:
+CLERK_PUBLISHABLE_KEY=
+CLERK_ISSUER=
+CLERK_AUTHORIZED_PARTIES=http://localhost:8787,http://127.0.0.1:8787
+ADMIN_USER_IDS=
+# Optional: a Clerk JWT public key PEM can avoid fetching JWKS in restricted environments.
+# CLERK_JWT_KEY=
+# Optional: the exact audience configured for your Clerk session token.
+# CLERK_AUDIENCE=
+
+# Server-side secrets: enter values only in the ignored .dev.vars file or Cloudflare secrets.
+OPENAI_API_KEY=
+CREDENTIAL_ENCRYPTION_KEY=
+
+# The source's model setting. Confirm Responses API access in your OpenAI project.
+OPENAI_MODEL=gpt-6-luna
+OPENAI_TRANSCRIPTION_MODEL=gpt-4o-mini-transcribe

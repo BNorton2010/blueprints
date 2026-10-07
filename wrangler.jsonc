@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "blueprints-library-dev",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-09-26",
+  "workers_dev": true,
+  "preview_urls": false,
+  "build": { "command": "npm run build", "watch_dir": ["worker", "web"] },
+  "assets": {
+    "directory": "dist/public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blueprints-library-dev",
+      "database_id": "LOCAL_ONLY_CREATE_A_FRESH_DEV_DATABASE",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "BUCKET", "bucket_name": "blueprints-library-dev-files" }
+  ],
+  "vars": { "OPENAI_MODEL": "gpt-6-luna", "OPENAI_TRANSCRIPTION_MODEL": "gpt-4o-mini-transcribe" }
+}

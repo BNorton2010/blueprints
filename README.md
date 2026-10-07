@@ -1,31 +1,56 @@
 # Creator Blueprint Library
 
-Standalone app extracted from ContentOS, with a public visual library, private blueprint studio, and a contextual strategist drawer.
+Independent Cloudflare port of the supplied app. The original ChatGPT Sites app at `blueprints.paidtobringpeace.com` is unchanged. Deployment targets the separate `blueprints-library-dev` Worker on `workers.dev`; no custom domain or DNS changes are configured.
 
-## Owner workflow
+The existing library, blueprint editor, transcript analysis, strategist drawer, PDF covers, themes, and voice recorder are retained. Clerk replaces Sites identity. The Worker verifies signed sessions and authorizes owners by stable Clerk user IDs. Public browsing stays anonymous. Each new account receives 100 successful strategist replies across all its conversations; failures do not spend replies. Conversation ownership, edit revisions, account/chat leases, and daily abuse limits remain server-side.
 
-Open `/admin` and sign in using the configured owner account. Expand **AI connection** and connect an OpenAI API key once. Keys are encrypted with AES-GCM using the production secret `CREDENTIAL_ENCRYPTION_KEY`; API responses never return the key.
+## First setup
 
-Choose **Add blueprint**, upload a PDF or PNG/JPEG/WebP, and click **Generate summary**. PDF uploads generate a first-page cover locally in the browser; a custom display image can replace it. Review the summary, key points, application steps, and full extracted source content. Choose Draft or Published and save. Drafts and their files are restricted to the owner.
+Use Node 24:
 
-## Implementation
+```sh
+npm ci
+npm run db:migrate:local
+npm test
+npm run dev
+```
 
-- `web/builder-chat.js` and `web/contextual-chat.css` reuse the actual ContentOS shared drawer, composer, safe Markdown rendering, keyboard handling, scroll behavior, and typing indicators.
-- `web/blueprints.css` carries the existing blueprint grid/detail styles. `web/voice.js` adapts ContentOS's recording, pause/resume, transcript insertion, retained-audio retry, microphone cleanup, and recording guards to this standalone app.
-- D1 owns metadata, detailed extracted blueprint context, private visitor conversations, encrypted connection settings, and bounded anonymous AI usage. R2 owns originals and images.
-- The strategist selects relevant published blueprints from their compact catalog, then retrieves detailed matching source excerpts. It uses only the visitor's stated business facts. Replies include checked blueprint citations.
-- Anonymous visitors receive an HttpOnly, Secure, SameSite cookie; conversation ownership is verified server-side. Owner writes check dispatch-authenticated identity and same-origin requests. Revision checks protect concurrent edits. Chat leases and request IDs protect duplicate turns.
-- Public browsing and chat do not require sign-in. `/admin` initiates dispatch-owned ChatGPT sign-in and allows only `ADMIN_EMAIL`.
+This starts a local Worker with local D1/R2 storage. It does not create remote Cloudflare resources. Without Clerk/OpenAI configuration, browsing works and protected features fail closed. Copy `.dev.vars.example` to ignored `.dev.vars` and fill the applicable values privately to connect your own services. Do not commit that file or put secret values in chat.
 
-## Development and validation
+The exported source includes **no published catalog, uploads, original documents, or teaching transcripts**. The new database begins empty. [Content import instructions](docs/CONTENT_IMPORT.md) explain the read-only content export and associated file bundle. The synthetic example is clearly labeled and is never imported automatically. Existing users, chats, quotas, strategist accounts, settings, and old encrypted keys must not be migrated.
 
-Run `npm install`, `npm run db:generate` when schema changes, `npm test`, then `npm run build`. Generated schema-only migrations ship under `dist/.openai/drizzle`. Applied migrations must remain immutable.
+## Account setup and development deployment
 
-The 12 behavior checks exercise owner authorization, cross-origin writes, draft exclusion, revision checks, validated uploads, editable analysis, encrypted credentials, private conversation isolation, grounded retrieval/citations, idempotent turns, failure recovery, and public/admin UI flows. AI requests are mocked in tests; real generation and transcription require the owner connection. PDF rendering and actual microphone permission need a browser for final device verification.
+Follow [the account and deployment guide](docs/DEPLOYMENT.md) to create a new Clerk application, a fresh D1 database/R2 bucket, and a scoped Cloudflare token. The repository contains GitHub checks and a manually triggered development deployment workflow. Remote deployment stays blocked until those account settings are supplied.
 
-This app has its own database and uploads. Five published ContentOS blueprints and their original images were imported on September 30, 2026. Two placeholder configurations were replaced with summaries and context extracted from their original images. Future edits use the blueprint studio. Dark mode is the default, with an optional light theme. A dismissible fixed banner links to the custom AI tool-building service.
+Server configuration names:
 
-## Strategist allowance
-Public browsing remains anonymous. Chat and transcription require dispatch-owned ChatGPT sign-in. Each stable site account receives 100 successful chat replies total with no expiry, shared across conversations and devices. Failed replies consume no allowance. A per-account lease prevents concurrent chats bypassing the limit. Existing IP daily anti-abuse limits remain in place; these are not a dollar budget. Luna defaults to low reasoning for advice and none for blueprint selection. Live AI still requires an owner-provided API key with model access.
+| Name | Purpose |
+| --- | --- |
+| `DB`, `BUCKET`, `ASSETS` | Cloudflare D1, R2, and built static assets bindings |
+| `CLERK_PUBLISHABLE_KEY`, `CLERK_ISSUER` | New Clerk application's public configuration |
+| `ADMIN_USER_IDS` | Explicit comma-separated owner Clerk user IDs |
+| `CLERK_AUTHORIZED_PARTIES` | Additional explicitly trusted frontend origins; the request origin is also checked |
+| `CLERK_JWT_KEY` | Optional Clerk public PEM verification key; default verification uses issuer JWKS |
+| `CLERK_AUDIENCE` | Optional audience claim requirement, if configured in Clerk |
+| `OPENAI_API_KEY` | Fresh server-side OpenAI secret; takes precedence over encrypted Admin storage |
+| `OPENAI_MODEL` | Explicit Responses model available in your own project |
+| `OPENAI_TRANSCRIPTION_MODEL` | Defaults to `gpt-4o-mini-transcribe` |
+| `CREDENTIAL_ENCRYPTION_KEY` | Fresh base64-encoded 32-byte AES key for retained Admin key-storage feature |
 
-Admin transcript input accepts pasted text or UTF-8 TXT/MD/SRT/VTT uploads (120,000 characters). Raw transcript text persists privately in D1; analysis combines it with a supplied or saved visual/PDF source. Generated detailed context, not the raw private transcript field, feeds the strategist. Transcript changes clear stale extracted context and require regeneration or manual replacement before publishing.
+No Clerk secret key is needed for public-key session verification. New Clerk sessions have fresh account identities; JWTs are verified on each protected request, with Clerk's short token expiry bounding session revocation delay. Client-provided Sites identity headers grant no access.
+
+The source model was `gpt-6-luna`. It remains the configuration default for fidelity, but access in your OpenAI project has **not** been assumed. With a fresh key and chosen model supplied securely, `npm run ai:check` makes one small billable structured-response request and checks model access. It does not test actual recorded-audio transcription. The Admin connection check verifies selected model access before accepting a key; an environment-managed key is read-only in Admin.
+
+## Validation
+
+```sh
+npm test
+npm run build
+npm run cloudflare:check
+npm run smoke
+```
+
+Run `smoke` after starting the local server. Tests cover independent cryptographic sessions, spoofed headers, ownership, private drafts, concurrent 100-reply enforcement, AI error recovery, voice retry, content-only imports, and existing UI behavior. AI calls are mocked in automated tests. Actual Clerk browser sign-in, real OpenAI generation, microphone permissions, PDF rendering on a device, GitHub Actions execution, and remote Cloudflare deployment need their respective configured services/browser.
+
+Applied schema-only migrations under `drizzle/` remain unchanged. Run `npm run db:generate` only during an intentional schema change. Build output and local storage are ignored. Future cloud tasks should use the existing checkout; each task is isolated, so a Git worktree is unnecessary unless explicitly requested.

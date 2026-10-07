@@ -1,0 +1,89 @@
+name: Deploy separate Cloudflare development app
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blueprints-cloudflare-development
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_D1_DATABASE_ID: ${{ vars.CLOUDFLARE_D1_DATABASE_ID }}
+      APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+      CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+      CLERK_ISSUER: ${{ vars.CLERK_ISSUER }}
+      ADMIN_USER_IDS: ${{ vars.ADMIN_USER_IDS }}
+      CLERK_AUDIENCE: ${{ vars.CLERK_AUDIENCE }}
+      OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+      OPENAI_TRANSCRIPTION_MODEL: ${{ vars.OPENAI_TRANSCRIPTION_MODEL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Check required credentials without exposing their values
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CREDENTIAL_ENCRYPTION_KEY: ${{ secrets.CREDENTIAL_ENCRYPTION_KEY }}
+        run: |
+          node --input-type=module <<'NODE'
+          for (const name of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'OPENAI_API_KEY', 'CREDENTIAL_ENCRYPTION_KEY', 'OPENAI_MODEL']) {
+            if (!process.env[name]?.trim()) throw new Error(`Configure ${name} in the GitHub development environment.`);
+          }
+          const key = process.env.CREDENTIAL_ENCRYPTION_KEY.trim();
+          if (!/^[A-Za-z0-9+/]{43}=$/.test(key) || Buffer.from(key, 'base64').length !== 32) throw new Error('CREDENTIAL_ENCRYPTION_KEY must encode a fresh 32-byte key.');
+          NODE
+      - run: npm run cloudflare:config
+      - run: npm run cloudflare:verify
+      - run: npx --no-install wrangler deploy --dry-run --config wrangler.dev.json --outdir .local/deploy-check
+      - name: Verify model access and a live structured strategist response before Cloudflare changes
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: npm run ai:check
+      - name: Apply schema-only migrations to the new development database
+        run: npx --no-install wrangler d1 migrations apply DB --remote --config wrangler.dev.json
+      - name: Install new server-side secrets on the separate development Worker
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CREDENTIAL_ENCRYPTION_KEY: ${{ secrets.CREDENTIAL_ENCRYPTION_KEY }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {spawnSync} from 'node:child_process';
+          const values = {OPENAI_API_KEY: process.env.OPENAI_API_KEY, CREDENTIAL_ENCRYPTION_KEY: process.env.CREDENTIAL_ENCRYPTION_KEY};
+          const result = spawnSync('npx', ['--no-install', 'wrangler', 'secret', 'bulk', '--config', 'wrangler.dev.json'], {input: JSON.stringify(values), stdio: ['pipe', 'inherit', 'inherit']});
+          if (result.error) throw result.error;
+          process.exit(result.status ?? 1);
+          NODE
+      - name: Deploy only the separate development Worker
+        run: npx --no-install wrangler deploy --config wrangler.dev.json
+      - name: Check the development endpoint
+        run: |
+          node --input-type=module <<'NODE'
+          let ready = false;
+          for (let attempt = 0; attempt < 5; attempt++) {
+            try {
+              const response = await fetch(process.env.APP_ORIGIN + '/api/session', {signal: AbortSignal.timeout(10000)});
+              if (response.ok) {
+                const session = await response.json();
+                ready = !session.signedIn && !session.admin && session.aiConfigured && session.authConfigured;
+              }
+            } catch {}
+            if (ready) break;
+            if (attempt < 4) await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+          if (!ready) throw new Error('Development session configuration check failed after deployment.');
+          console.log('Separate development endpoint responds with anonymous session and configured services.');
+          NODE

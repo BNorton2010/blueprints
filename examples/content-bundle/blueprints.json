@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "title": "Synthetic preview blueprint",
+      "summary": "This example verifies the independent library preview. It is not part of the original Creator Blueprint catalog.",
+      "points": ["Inspect the preserved library layout."],
+      "application": ["Import the owner's real content before launch."],
+      "content": "Synthetic preview material only. This is a development example, not an original business framework.",
+      "transcript": "",
+      "status": "published",
+      "image": null,
+      "source": null,
+      "sourceName": null,
+      "sourceMime": null
+    }
+  ]
+}
